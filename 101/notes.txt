@@ -1,0 +1,203 @@
+
+#############################################################################
+# EXAMPLES WORKING WITH PODS
+#############################################################################
+
+> kubectl apply -f .\pod-definition.yml
+
+> kubectl get pods
+NAME        READY   STATUS    RESTARTS   AGE
+myapp-pod   1/1     Running   0          48s
+
+> kubectl describe pod myapp-pod
+
+> kubectl delete pod myapp-pod
+
+#############################################################################
+# EXAMPLES WORKING WITH REPLICASET
+#############################################################################
+
+> kubectl apply -f .\replicaset-definition.yml
+
+> kubectl get replicaset
+NAME       DESIRED   CURRENT   READY   AGE
+frontend   2         2         2       36s
+
+> kubectl describe replicaset frontend
+
+> kubectl get pods
+NAME             READY   STATUS    RESTARTS   AGE
+frontend-mrpbh   1/1     Running   0          64s
+frontend-qfspq   1/1     Running   0          64s
+
+# Modify the yaml file with replicas: 3
+> kubectl apply -f .\replicaset-definition.yml
+
+> kubectl get pods
+NAME             READY   STATUS    RESTARTS   AGE
+frontend-mrpbh   1/1     Running   0          116s
+frontend-qfspq   1/1     Running   0          116s
+frontend-z6l7j   1/1     Running   0          9s
+
+> kubectl delete pod frontend-z6l7j
+pod "frontend-z6l7j" deleted
+
+> kubectl get pods
+NAME             READY   STATUS    RESTARTS   AGE
+frontend-mrpbh   1/1     Running   0          3m17s
+frontend-qfspq   1/1     Running   0          3m17s
+frontend-qlrfw   1/1     Running   0          47s
+
+> kubectl describe replicaset frontend
+...
+Events:
+  Type    Reason            Age    From                   Message
+  ----    ------            ----   ----                   -------
+  Normal  SuccessfulCreate  3m39s  replicaset-controller  Created pod: frontend-qfspq
+  Normal  SuccessfulCreate  3m39s  replicaset-controller  Created pod: frontend-mrpbh
+  Normal  SuccessfulCreate  112s   replicaset-controller  Created pod: frontend-z6l7j
+  Normal  SuccessfulCreate  69s    replicaset-controller  Created pod: frontend-qlrfw
+
+> kubectl apply -f .\pod-definition.yml
+
+> kubectl get pods
+NAME             READY   STATUS    RESTARTS   AGE
+frontend-mrpbh   1/1     Running   0          5m
+frontend-qfspq   1/1     Running   0          5m
+frontend-qlrfw   1/1     Running   0          2m30s
+
+> kubectl describe replicaset frontend
+...
+Events:
+  Type    Reason            Age    From                   Message
+  ----    ------            ----   ----                   -------
+  Normal  SuccessfulCreate  5m18s  replicaset-controller  Created pod: frontend-qfspq
+  Normal  SuccessfulCreate  5m18s  replicaset-controller  Created pod: frontend-mrpbh
+  Normal  SuccessfulCreate  3m31s  replicaset-controller  Created pod: frontend-z6l7j
+  Normal  SuccessfulCreate  2m48s  replicaset-controller  Created pod: frontend-qlrfw
+  Normal  SuccessfulDelete  37s    replicaset-controller  Deleted pod: myapp-pod
+
+#############################################################################
+# EXAMPLES WORKING WITH DEPLOYMENT
+#############################################################################
+
+> kubectl apply -f .\deployment-definition.yml
+
+
+> kubectl get all
+NAME                            READY   STATUS    RESTARTS   AGE
+pod/frontend-7df849dd84-7s4sm   1/1     Running   0          11s
+pod/frontend-7df849dd84-95k58   1/1     Running   0          11s
+pod/frontend-7df849dd84-qtfj7   1/1     Running   0          11s
+pod/frontend-7df849dd84-sx8dk   1/1     Running   0          11s
+
+NAME                 TYPE        CLUSTER-IP   EXTERNAL-IP   PORT(S)   AGE
+service/kubernetes   ClusterIP   10.96.0.1    <none>        443/TCP   3d21h
+
+NAME                       READY   UP-TO-DATE   AVAILABLE   AGE
+deployment.apps/frontend   4/4     4            4           11s
+
+NAME                                  DESIRED   CURRENT   READY   AGE
+replicaset.apps/frontend-7df849dd84   4         4         4       11s
+
+> kubectl describe deployment
+
+#############################################################################
+# EXAMPLES WORKING WITH ROLLOUT
+#############################################################################
+
+> kubectl rollout status deployment frontend
+> kubectl rollout history deployment frontend
+> kubectl delete deployment frontend
+
+> kubectl apply -f .\deployment-definition.yml --record
+> kubectl rollout status deployment frontend
+> kubectl rollout history deployment frontend
+
+# Modify the image version in the deployment-definition.yml
+# image: nginx:1.12
+
+> kubectl apply -f .\deployment-definition.yml
+> kubectl rollout status deployment frontend
+Waiting for deployment "frontend" rollout to finish: 3 out of 4 new replicas have been updated...
+Waiting for deployment "frontend" rollout to finish: 3 out of 4 new replicas have been updated...
+Waiting for deployment "frontend" rollout to finish: 3 out of 4 new replicas have been updated...
+Waiting for deployment "frontend" rollout to finish: 3 out of 4 new replicas have been updated...
+Waiting for deployment "frontend" rollout to finish: 1 old replicas are pending termination...
+Waiting for deployment "frontend" rollout to finish: 1 old replicas are pending termination...
+Waiting for deployment "frontend" rollout to finish: 1 old replicas are pending termination...
+Waiting for deployment "frontend" rollout to finish: 3 of 4 updated replicas are available...
+deployment "frontend" successfully rolled out
+
+> kubectl describe deployment
+...
+Events:
+  Type    Reason             Age    From                   Message
+  ----    ------             ----   ----                   -------
+  Normal  ScalingReplicaSet  5m44s  deployment-controller  Scaled up replica set frontend-7df849dd84 to 4
+  Normal  ScalingReplicaSet  107s   deployment-controller  Scaled up replica set frontend-69fdfdbbcd to 1
+  Normal  ScalingReplicaSet  107s   deployment-controller  Scaled down replica set frontend-7df849dd84 to 3
+  Normal  ScalingReplicaSet  106s   deployment-controller  Scaled up replica set frontend-69fdfdbbcd to 2
+  Normal  ScalingReplicaSet  98s    deployment-controller  Scaled down replica set frontend-7df849dd84 to 2
+  Normal  ScalingReplicaSet  98s    deployment-controller  Scaled up replica set frontend-69fdfdbbcd to 3
+  Normal  ScalingReplicaSet  96s    deployment-controller  Scaled down replica set frontend-7df849dd84 to 1
+  Normal  ScalingReplicaSet  96s    deployment-controller  Scaled up replica set frontend-69fdfdbbcd to 4
+  Normal  ScalingReplicaSet  94s    deployment-controller  Scaled down replica set frontend-7df849dd84 to 0
+
+kubectl rollout history deployment frontend
+deployment.extensions/frontend
+REVISION  CHANGE-CAUSE
+1         kubectl.exe apply --filename=.\deployment-definition.yml --record=true
+2         kubectl.exe apply --filename=.\deployment-definition.yml --record=true
+
+#############################################################################
+# EXAMPLES WORKING WITH SERVICES
+#############################################################################
+
+> kubectl apply -f .\service-definition.yml
+> kubectl get services
+NAME         TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)        AGE
+frontend     NodePort    10.108.59.235   <none>        80:30008/TCP   7s
+kubernetes   ClusterIP   10.96.0.1       <none>        443/TCP        3d23h
+
+> kubectl get services -o wide
+NAME         TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)        AGE     SELECTOR
+frontend     NodePort    10.108.59.235   <none>        80:30008/TCP   2m18s   app=myapp
+kubernetes   ClusterIP   10.96.0.1       <none>        443/TCP        3d23h   <none>
+
+
+> curl http://localhost:30008
+
+
+StatusCode        : 200
+StatusDescription : OK
+Content           : <!DOCTYPE html>
+                    <html>
+                    <head>
+                    <title>Welcome to nginx!</title>
+                    <style>
+                        body {
+                            width: 35em;
+                            margin: 0 auto;
+                            font-family: Tahoma, Verdana, Arial, sans-serif;
+                        }
+                    </style>
+                    <...
+RawContent        : HTTP/1.1 200 OK
+                    Connection: keep-alive
+                    Accept-Ranges: bytes
+                    Content-Length: 612
+                    Content-Type: text/html
+                    Date: Tue, 06 Aug 2019 10:27:00 GMT
+                    ETag: "5964d2ae-264"
+                    Last-Modified: Tue, 11 Jul 2017 ...
+Forms             : {}
+Headers           : {[Connection, keep-alive], [Accept-Ranges, bytes], [Content-Length, 612], [Content-Type, text/html]...}
+Images            : {}
+InputFields       : {}
+Links             : {@{innerHTML=nginx.org; innerText=nginx.org; outerHTML=<A href="http://nginx.org/">nginx.org</A>;
+                    outerText=nginx.org; tagName=A; href=http://nginx.org/}, @{innerHTML=nginx.com; innerText=nginx.com;
+                    outerHTML=<A href="http://nginx.com/">nginx.com</A>; outerText=nginx.com; tagName=A; href=http://nginx.com/}}
+ParsedHtml        : mshtml.HTMLDocumentClass
+RawContentLength  : 612
+

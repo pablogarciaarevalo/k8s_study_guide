@@ -1,0 +1,20 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: my2container-pod
+  labels:
+    app: my2container-pod
+spec:
+  containers:
+    - name: nginx-container
+      image: nginx
+      resources:
+        limits:
+          memory: "128Mi"
+          cpu: "500m"
+    - name: backend-container
+      image: redis
+      resources:
+        limits:
+          memory: "128Mi"
+          cpu: "500m"
